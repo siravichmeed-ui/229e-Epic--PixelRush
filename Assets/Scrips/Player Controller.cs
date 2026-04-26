@@ -3,59 +3,104 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Component")]
     [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private Transform GFX;
-    [SerializeField] private float jumpForce = 10f;
-    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private Animator anim;
+    [SerializeField] private CapsuleCollider2D col;
+
+    [Header("Ground Check")]
     [SerializeField] private Transform feetPos;
-    [SerializeField] private float groundDistance = 0.25f;
-    [SerializeField] private float jumpTime = 0.3f;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float groundDistance = 0.4f;
 
-    [SerializeField] private float crouchHeight = 0.5f;
+    [Header("Jump")]
+    [SerializeField] private float jumpForce = 12f;
 
-    private bool isGrounded = false;
-    private bool isJumping = false;
-    private float jumpTimer;
+    [Header("Crouch")]
+    [SerializeField] private Vector2 standSize = new Vector2(1f, 1.8f);
+    [SerializeField] private Vector2 crouchSize = new Vector2(1f, 1f);
+    [SerializeField] private Vector2 standOffset = new Vector2(0f, 0f);
+    [SerializeField] private Vector2 crouchOffset = new Vector2(0f, -0.4f);
 
-    private void Update()
+    private bool isGrounded;
+    private bool isCrouching;
+
+    void Start()
     {
-        isGrounded = Physics2D.OverlapCircle(feetPos.position, groundDistance, groundLayer);
-        #region JUMPING
-        if (isGrounded && Keyboard.current.spaceKey.wasPressedThisFrame)
-        {
-            isJumping = true;
-            rb.velocity = Vector2.up * jumpForce;
-        }
-        if (isJumping && Keyboard.current.spaceKey.isPressed)
-        {
-            if (jumpTimer < jumpTime)
-            {
-                rb.velocity = Vector2.up * jumpForce;
-                jumpTimer += Time.deltaTime;
-            }
-            else
-            {
-                isJumping = false;
-            }
-        }
-        if (Keyboard.current.spaceKey.wasReleasedThisFrame)
-        {
-            isJumping = false;
-            jumpTimer = 0f;
-        }
-        #endregion
+        // reset state
+        isCrouching = false;
+        anim.SetBool("isCrouching", false);
 
-        #region CROUCHING
-        if (isGrounded && Keyboard.current.ctrlKey.wasPressedThisFrame)
-        {
-            GFX.localScale = new Vector3(GFX.localScale.x, crouchHeight, GFX.localScale.z);
-        }
+        col.size = standSize;
+        col.offset = standOffset;
 
-        if (Keyboard.current.ctrlKey.wasReleasedThisFrame)
-        {
-            GFX.localScale = new Vector3(GFX.localScale.x, 1f, GFX.localScale.z);
-        }
-        #endregion
+        // กันจมพื้นตอนเริ่ม
+        transform.position += Vector3.up * 0.2f;
     }
 
+    void Update()
+    {
+        CheckGround();
+        HandleJump();
+        HandleCrouch();
+        UpdateAnimation();
+    }
+
+    // ================= GROUND =================
+    void CheckGround()
+    {
+        isGrounded = Physics2D.OverlapCircle(feetPos.position, groundDistance, groundLayer);
+    }
+
+    // ================= JUMP =================
+    void HandleJump()
+    {
+        if (isGrounded && Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            // resetแรงตกก่อน
+            rb.velocity = new Vector2(rb.velocity.x, 0f);
+
+            // กระโดดแบบเสถียร
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        }
+    }
+
+    // ================= CROUCH =================
+    void HandleCrouch()
+    {
+        if (isGrounded && Keyboard.current.leftCtrlKey.wasPressedThisFrame)
+        {
+            isCrouching = true;
+            anim.SetBool("isCrouching", true);
+
+            col.size = crouchSize;
+            col.offset = crouchOffset;
+        }
+
+        if (Keyboard.current.leftCtrlKey.wasReleasedThisFrame)
+        {
+            isCrouching = false;
+            anim.SetBool("isCrouching", false);
+
+            col.size = standSize;
+            col.offset = standOffset;
+        }
+    }
+
+    // ================= ANIMATION =================
+    void UpdateAnimation()
+    {
+        anim.SetBool("isGrounded", isGrounded);
+        anim.SetFloat("yVelocity", rb.velocity.y);
+    }
+
+    // ================= DEBUG =================
+    private void OnDrawGizmosSelected()
+    {
+        if (feetPos != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(feetPos.position, groundDistance);
+        }
+    }
 }
