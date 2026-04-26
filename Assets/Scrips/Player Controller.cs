@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Jump")]
     [SerializeField] private float jumpForce = 12f;
+    [SerializeField] private int maxJumpCount = 2; // 👈 จำนวนครั้งที่กระโดดได้
 
     [Header("Crouch")]
     [SerializeField] private Vector2 standSize = new Vector2(1f, 1.8f);
@@ -24,17 +25,16 @@ public class PlayerController : MonoBehaviour
 
     private bool isGrounded;
     private bool isCrouching;
+    private int jumpCount; // 👈 นับจำนวน jump
 
     void Start()
     {
-        // reset state
         isCrouching = false;
         anim.SetBool("isCrouching", false);
 
         col.size = standSize;
         col.offset = standOffset;
 
-        // กันจมพื้นตอนเริ่ม
         transform.position += Vector3.up * 0.2f;
     }
 
@@ -50,17 +50,25 @@ public class PlayerController : MonoBehaviour
     void CheckGround()
     {
         isGrounded = Physics2D.OverlapCircle(feetPos.position, groundDistance, groundLayer);
+
+        // 👈 รีเซ็ต jump เมื่อแตะพื้น
+        if (isGrounded)
+        {
+            jumpCount = 0;
+        }
     }
 
     // ================= JUMP =================
     void HandleJump()
     {
-        if (isGrounded && Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current.spaceKey.wasPressedThisFrame && jumpCount < maxJumpCount)
         {
+            jumpCount++;
+
             // resetแรงตกก่อน
             rb.velocity = new Vector2(rb.velocity.x, 0f);
 
-            // กระโดดแบบเสถียร
+            // กระโดด
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         }
     }
@@ -94,7 +102,6 @@ public class PlayerController : MonoBehaviour
         anim.SetFloat("yVelocity", rb.velocity.y);
     }
 
-    // ================= DEBUG =================
     private void OnDrawGizmosSelected()
     {
         if (feetPos != null)
