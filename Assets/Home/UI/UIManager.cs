@@ -2,15 +2,19 @@ using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
-    public GameObject[] allUI;
+    public GameObject popupUI;
 
-    public void ShowUI(GameObject target)
+    public void ShowUI()
     {
-        foreach (GameObject ui in allUI)
-        {
-            ui.SetActive(false);
-        }
+        popupUI.SetActive(true);
+    }
 
-        target.SetActive(true);
+    public void HideUI()
+    {
+        popupUI.SetActive(false);
+    }
+    public void Quit()
+    {
+        Application.Quit();
     }
 }
