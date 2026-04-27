@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
@@ -7,6 +8,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator anim;
     [SerializeField] private CapsuleCollider2D col;
+    [SerializeField] private SpriteRenderer sr;
 
     [Header("Ground Check")]
     [SerializeField] private Transform feetPos;
@@ -15,7 +17,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Jump")]
     [SerializeField] private float jumpForce = 12f;
-    [SerializeField] private int maxJumpCount = 2; // 👈 จำนวนครั้งที่กระโดดได้
+    [SerializeField] private int maxJumpCount = 2;
 
     [Header("Crouch")]
     [SerializeField] private Vector2 standSize = new Vector2(1f, 1.8f);
@@ -23,64 +25,60 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector2 standOffset = new Vector2(0f, 0f);
     [SerializeField] private Vector2 crouchOffset = new Vector2(0f, -0.4f);
 
+    // ================= 💖 HEALTH =================
+    [Header("Health")]
+    [SerializeField] private int maxHP = 3;
+    [SerializeField] private float invincibleTime = 1f;
+
+    private int currentHP;
+    private bool isDead = false;
+    private bool isInvincible = false;
+
+    // ================= STATE =================
     private bool isGrounded;
     private bool isCrouching;
-    private int jumpCount; // 👈 นับจำนวน jump
+    private int jumpCount;
 
     void Start()
     {
-        isCrouching = false;
-        anim.SetBool("isCrouching", false);
+        currentHP = maxHP;
 
         col.size = standSize;
         col.offset = standOffset;
-
-        transform.position += Vector3.up * 0.2f;
     }
 
     void Update()
     {
+        if (isDead) return;
+
         CheckGround();
         HandleJump();
         HandleCrouch();
         UpdateAnimation();
     }
 
-    // ================= GROUND =================
     void CheckGround()
     {
         isGrounded = Physics2D.OverlapCircle(feetPos.position, groundDistance, groundLayer);
-
-        // 👈 รีเซ็ต jump เมื่อแตะพื้น
-        if (isGrounded)
-        {
-            jumpCount = 0;
-        }
+        if (isGrounded) jumpCount = 0;
     }
 
-    // ================= JUMP =================
     void HandleJump()
     {
         if (Keyboard.current.spaceKey.wasPressedThisFrame && jumpCount < maxJumpCount)
         {
             jumpCount++;
-
-            // resetแรงตกก่อน
             rb.velocity = new Vector2(rb.velocity.x, 0f);
-
-            // กระโดด
             rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         }
     }
 
-    // ================= CROUCH =================
     void HandleCrouch()
     {
         if (isGrounded && Keyboard.current.leftCtrlKey.wasPressedThisFrame)
         {
             isCrouching = true;
             anim.SetBool("isCrouching", true);
-
             col.size = crouchSize;
             col.offset = crouchOffset;
         }
@@ -89,13 +87,68 @@ public class PlayerController : MonoBehaviour
         {
             isCrouching = false;
             anim.SetBool("isCrouching", false);
-
             col.size = standSize;
             col.offset = standOffset;
         }
     }
 
-    // ================= ANIMATION =================
+    // ================= 💥 DAMAGE =================
+    public void TakeDamage(int dmg)
+    {
+        if (isDead || isInvincible) return;
+
+        isInvincible = true; // 👈 ต้องตั้งตรงนี้ทันที
+
+        currentHP -= dmg;
+        Debug.Log("โดน! HP: " + currentHP);
+
+        anim.SetTrigger("hit");
+
+        if (currentHP <= 0)
+        {
+            Die();
+        }
+        else
+        {
+            StartCoroutine(Invincible());
+        }
+
+        
+    }
+    IEnumerator Invincible()
+    {
+        yield return new WaitForSeconds(1f);
+        isInvincible = false;
+    }
+    /*IEnumerator Invincible()
+    {
+        isInvincible = true;
+
+        // กระพริบ
+        for (int i = 0; i < 5; i++)
+        {
+            sr.enabled = false;
+            yield return new WaitForSeconds(0.1f);
+            sr.enabled = true;
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        yield return new WaitForSeconds(invincibleTime);
+        isInvincible = false;
+    }*/
+
+    void Die()
+    {
+        if (isDead) return;
+
+        isDead = true;
+
+        Debug.Log("Game Over");
+
+        anim.SetTrigger("die");
+        Destroy(gameObject, 1f);
+    }
+
     void UpdateAnimation()
     {
         anim.SetBool("isGrounded", isGrounded);
