@@ -22,4 +22,13 @@ public class BossBullet : MonoBehaviour
     {
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
     }
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // TODO: ทำดาเมจ player (ถ้ามีระบบเลือด)
+
+            Destroy(gameObject); // 👈 กระสุนหาย
+        }
+    }
 }

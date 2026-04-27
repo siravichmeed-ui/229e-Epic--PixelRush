@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 public class Boss : MonoBehaviour
 {
@@ -8,9 +7,7 @@ public class Boss : MonoBehaviour
     [SerializeField] private SpriteRenderer sr;
     [SerializeField] private Animator anim;
     [SerializeField] private Transform firePoint;
-    [SerializeField] private Transform laserOrigin;
     [SerializeField] private GameObject bulletPrefab;
-    [SerializeField] private LineRenderer laserLine;
 
     [Header("Screen Lock")]
     [SerializeField] private float offsetX = -2f;
@@ -22,10 +19,8 @@ public class Boss : MonoBehaviour
 
     [Header("Attack")]
     [SerializeField] private float fireRate = 1.5f;
-    [SerializeField] private float laserCooldown = 5f;
 
     private float fireTimer;
-    private float laserTimer;
     private float y;
 
     private enum Phase { Phase1, Phase2, Phase3 }
@@ -35,9 +30,6 @@ public class Boss : MonoBehaviour
     {
         hp = maxHP;
         y = 0.5f;
-
-        if (laserLine != null)
-            laserLine.enabled = false;
     }
 
     void Update()
@@ -65,7 +57,6 @@ public class Boss : MonoBehaviour
     void FlipToPlayer()
     {
         if (!player) return;
-
         sr.flipX = player.position.x < transform.position.x;
     }
 
@@ -90,24 +81,15 @@ public class Boss : MonoBehaviour
     void HandleAttack()
     {
         fireTimer += Time.deltaTime;
-        laserTimer += Time.deltaTime;
 
-        // ยิงธรรมดา
         if (fireTimer >= fireRate)
         {
             fireTimer = 0f;
-            anim.SetTrigger("attack");
-        }
-
-        // เลเซอร์ (เฉพาะ phase 2/3)
-        if (phase != Phase.Phase1 && laserTimer >= laserCooldown)
-        {
-            laserTimer = 0f;
-            anim.SetTrigger("laser");
+            anim.SetTrigger("attack"); // ยิงผ่าน animation
         }
     }
 
-    // ================= SHOOT (เรียกจาก Animation Event) =================
+    // ================= SHOOT (Animation Event) =================
     public void Shoot()
     {
         GameObject b = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
@@ -117,45 +99,6 @@ public class Boss : MonoBehaviour
         {
             bullet.SetTarget(player);
         }
-    }
-
-    // ================= LASER (เรียกจาก Animation Event) =================
-    public void AE_LaserStart()
-    {
-        StartCoroutine(LaserRoutine());
-    }
-
-    IEnumerator LaserRoutine()
-    {
-        float duration = (phase == Phase.Phase3) ? 2.5f : 1.5f;
-
-        if (laserLine == null) yield break;
-
-        laserLine.enabled = true;
-
-        float t = 0;
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-
-            Vector3 start = laserOrigin.position;
-            Vector3 dir = Vector3.left;
-            float dist = 20f;
-
-            laserLine.SetPosition(0, start);
-            laserLine.SetPosition(1, start + dir * dist);
-
-            // ตรวจโดน player
-            RaycastHit2D hit = Physics2D.Raycast(start, dir, dist);
-            if (hit && hit.collider.CompareTag("Player"))
-            {
-                // TODO: ทำดาเมจ player
-            }
-
-            yield return null;
-        }
-
-        laserLine.enabled = false;
     }
 
     // ================= DAMAGE =================
