@@ -18,6 +18,8 @@ AudioMixerController:
   m_ExposedParameters:
   - guid: cc19b30b32af4004c9b80c099f32123b
     name: Home
+  - guid: 46d1dd63002e23c4ca2c28ec87cf581c
+    name: Click
   m_AudioMixerGroupViews:
   - guids:
     - ce0988c28b0cb3a438f739108b30c462
@@ -71,6 +73,7 @@ AudioMixerSnapshotController:
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: 193263e9904e9564ab09559d91152b75
   m_FloatValues:
+    46d1dd63002e23c4ca2c28ec87cf581c: -0.08374829
     0cdad47cd6f10c645aa165aaca933d88: 0.06802497
   m_TransitionOverrides: {}
 --- !u!244 &2579829322885660071
