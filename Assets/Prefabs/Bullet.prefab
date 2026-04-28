@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8933749998522685878}
   - component: {fileID: -2094693596960544356}
   - component: {fileID: 7600553584069843999}
+  - component: {fileID: 6804625780762658258}
   m_Layer: 8
   m_Name: Bullet
   m_TagString: Obstacle
@@ -129,7 +130,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35286737e697ac34fab1cf3c3f3c42ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBullet
-  speed: 13.07
+  speed: 373.7
 --- !u!70 &-2094693596960544356
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -194,3 +195,18 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
+--- !u!114 &6804625780762658258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6895560873015864410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 945f152536728064787b609fd138e59b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmProjectile
+  speed: 12
+  lifeTime: 5
+  outOfScreenMargin: 0.1

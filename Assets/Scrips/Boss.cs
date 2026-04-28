@@ -2,112 +2,143 @@ using UnityEngine;
 
 public class Boss : MonoBehaviour
 {
-    [Header("Refs")]
+    [Header("References")]
     [SerializeField] private Transform player;
-    [SerializeField] private SpriteRenderer sr;
-    [SerializeField] private Animator anim;
-    [SerializeField] private Transform firePoint;
-    [SerializeField] private GameObject bulletPrefab;
 
-    [Header("Screen Lock")]
-    [SerializeField] private float offsetX = -2f;
-    [SerializeField] private float yMin = 0.3f, yMax = 0.7f, ySpeed = 1.2f;
+    [Header("Arm (ตัวที่ติดตัว)")]
+    [SerializeField] private GameObject armObject;   // Arm_Right (ใน Hierarchy)
+    [SerializeField] private Animator armAnim;       // Animator ของแขน
 
-    [Header("Stats")]
-    [SerializeField] private int maxHP = 50;
-    private int hp;
+    [Header("Shoot Point (ตัวเล็งจริง)")]
+    [SerializeField] private Transform shootPos;     // จุดปลายแขน (หมุนตัวนี้)
+
+    [Header("Projectile Arm")]
+    [SerializeField] private GameObject armPrefab;   // Prefab แขน (ไอคอนสีน้ำเงิน)
 
     [Header("Attack")]
-    [SerializeField] private float fireRate = 1.5f;
+    [SerializeField] private float attackCooldown = 2f;
 
-    private float fireTimer;
-    private float y;
+    [Header("Aim")]
+    [SerializeField] private float rotateSpeed = 10f;
+    [SerializeField] private float minAngle = -80f;
+    [SerializeField] private float maxAngle = 80f;
+    [SerializeField] private float angleOffset = 0f; // ถ้าสไปรท์ไม่หันขวา ใส่ 90 หรือ -90
 
-    private enum Phase { Phase1, Phase2, Phase3 }
-    private Phase phase = Phase.Phase1;
+    [Header("Phase")]
+    [SerializeField] private int maxHP = 50;
+    private int currentHP;
+
+    private float attackTimer;
+    private int phase = 1;
+    private bool isArmOut = false;
 
     void Start()
     {
-        hp = maxHP;
-        y = 0.5f;
+        currentHP = maxHP;
     }
 
     void Update()
     {
-        LockToScreen();
-        FlipToPlayer();
-        UpdatePhase();
+        if (player == null) return;
+
         HandleAttack();
+        UpdatePhase();
     }
 
-    // ================= MOVE =================
-    void LockToScreen()
+    // ใช้ LateUpdate กัน animation มาทับ
+    void LateUpdate()
     {
-        y = Mathf.PingPong(Time.time * ySpeed, yMax - yMin) + yMin;
-
-        Vector3 screenPos = new Vector3(1f, y, 0);
-        Vector3 worldPos = Camera.main.ViewportToWorldPoint(screenPos);
-
-        worldPos.z = 0;
-        worldPos.x += offsetX;
-
-        transform.position = worldPos;
+        AimShootPos();
     }
 
-    void FlipToPlayer()
+    // ================= AIM =================
+    void AimShootPos()
     {
-        if (!player) return;
-        sr.flipX = player.position.x < transform.position.x;
-    }
+        if (isArmOut) return; // ตอนยิงอยู่ไม่ต้องหมุน
 
-    // ================= PHASE =================
-    void UpdatePhase()
-    {
-        float t = (float)hp / maxHP;
+        Vector2 dir = player.position - shootPos.position;
 
-        if (t <= 0.3f && phase != Phase.Phase3)
-        {
-            phase = Phase.Phase3;
-            anim.SetBool("isPhase3", true);
-        }
-        else if (t <= 0.6f && phase == Phase.Phase1)
-        {
-            phase = Phase.Phase2;
-            anim.SetBool("isPhase2", true);
-        }
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+
+        angle += angleOffset;
+        angle = Mathf.Clamp(angle, minAngle, maxAngle);
+
+        Quaternion targetRot = Quaternion.Euler(0, 0, angle);
+
+        shootPos.rotation = Quaternion.Lerp(
+            shootPos.rotation,
+            targetRot,
+            Time.deltaTime * rotateSpeed
+        );
     }
 
     // ================= ATTACK =================
     void HandleAttack()
     {
-        fireTimer += Time.deltaTime;
+        if (isArmOut) return;
 
-        if (fireTimer >= fireRate)
+        attackTimer += Time.deltaTime;
+
+        if (attackTimer >= attackCooldown)
         {
-            fireTimer = 0f;
-            anim.SetTrigger("attack"); // ยิงผ่าน animation
+            attackTimer = 0f;
+
+            // เรียก animation แขน
+            if (armAnim != null)
+                armAnim.SetTrigger("attack");
         }
     }
 
-    // ================= SHOOT (Animation Event) =================
-    public void Shoot()
+    // 👉 เรียกจาก Animation Event (บน Arm)
+    public void ShootArm()
     {
-        GameObject b = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+        if (isArmOut) return;
 
-        BossBullet bullet = b.GetComponent<BossBullet>();
-        if (bullet != null)
+        isArmOut = true;
+
+        armObject.SetActive(false);
+
+        GameObject armObj = Instantiate(armPrefab, shootPos.position, Quaternion.identity);
+
+        ArmProjectile proj = armObj.GetComponent<ArmProjectile>();
+
+        if (proj != null)
         {
-            bullet.SetTarget(player);
+            proj.Init(this, player); // 👈 ส่ง player ไป
+        }
+    }
+
+    // 👉 ให้แขนกลับ
+    public void ReturnArm()
+    {
+        isArmOut = false;
+        armObject.SetActive(true);
+    }
+
+    // ================= PHASE =================
+    void UpdatePhase()
+    {
+        float hpPercent = (float)currentHP / maxHP;
+
+        if (hpPercent <= 0.6f && phase == 1)
+        {
+            phase = 2;
+            attackCooldown = 1.2f;
+        }
+
+        if (hpPercent <= 0.3f && phase == 2)
+        {
+            phase = 3;
+            attackCooldown = 0.7f;
         }
     }
 
     // ================= DAMAGE =================
     public void TakeDamage(int dmg)
     {
-        hp -= dmg;
-        anim.SetTrigger("hit");
+        currentHP -= dmg;
 
-        if (hp <= 0)
+        if (currentHP <= 0)
         {
             Die();
         }
@@ -115,7 +146,7 @@ public class Boss : MonoBehaviour
 
     void Die()
     {
-        anim.SetTrigger("die");
-        Destroy(gameObject, 1.5f);
+        Debug.Log("Boss Dead");
+        Destroy(gameObject);
     }
 }
