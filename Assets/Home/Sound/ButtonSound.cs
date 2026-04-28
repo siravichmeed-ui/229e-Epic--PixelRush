@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class ButtonSound : MonoBehaviour
 {
+    public GameObject settingsPanel;
     public AudioSource audioSource;
     public AudioClip clickSound;
 
@@ -10,4 +11,5 @@ public class ButtonSound : MonoBehaviour
         audioSource.PlayOneShot(clickSound);
         Debug.Log("Button sound .");
     }
+   
 }
