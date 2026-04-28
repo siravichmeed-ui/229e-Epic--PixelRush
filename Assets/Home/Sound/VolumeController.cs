@@ -6,7 +6,7 @@ public class VolumeController : MonoBehaviour
 {
     [SerializeField] private AudioMixer mixer;
     [SerializeField] private Slider musicSlider;
-    
+
 
     public void SetVolume()
     {
