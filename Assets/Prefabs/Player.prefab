@@ -45,7 +45,6 @@ GameObject:
   - component: {fileID: 3420388218531419965}
   - component: {fileID: 2886992721331528388}
   - component: {fileID: 1889430644437660076}
-  - component: {fileID: 4037731703364087504}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -61,7 +60,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5884614460485257963}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -6.34, y: -4.68, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -229,25 +228,17 @@ MonoBehaviour:
   rb: {fileID: 2886992721331528388}
   anim: {fileID: 1025186042568836454}
   col: {fileID: 3420388218531419965}
+  sr: {fileID: 9187081323280499295}
   feetPos: {fileID: 6685880861801897887}
   groundLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 0
   groundDistance: 0.1
   jumpForce: 20
+  maxJumpCount: 2
   standSize: {x: 0.6602488, y: 1.09636}
   crouchSize: {x: 0.8038063, y: 0.8038063}
   standOffset: {x: -0.04405403, y: 0.7794653}
   crouchOffset: {x: 0.02772474, y: 0.6051451}
---- !u!114 &4037731703364087504
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5884614460485257963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4838ead6f67066142911eb46c943346d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerCollition
+  maxHP: 3
+  invincibleTime: 1
