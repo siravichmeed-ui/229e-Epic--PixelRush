@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -16,5 +17,14 @@ public class UIManager : MonoBehaviour
     public void Quit()
     {
         Application.Quit();
+    }
+    public void Game()
+    {
+        SceneManager.LoadScene(1);
+
+    }
+    public void Home()
+    {
+        SceneManager.LoadScene(0);
     }
 }

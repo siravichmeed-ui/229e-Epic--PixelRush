@@ -4,6 +4,9 @@ using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField] private HeartUI heartUI;
+    [SerializeField] private GameObject gameOverUI;
+
     [Header("Component")]
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator anim;
@@ -42,6 +45,10 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         currentHP = maxHP;
+        heartUI.UpdateHearts(currentHP);
+
+        if (gameOverUI != null)
+            gameOverUI.SetActive(false);
 
         col.size = standSize;
         col.offset = standOffset;
@@ -101,6 +108,7 @@ public class PlayerController : MonoBehaviour
 
         currentHP -= dmg;
         Debug.Log("โดน! HP: " + currentHP);
+        heartUI.UpdateHearts(currentHP);
 
         anim.SetTrigger("hit");
 
@@ -146,6 +154,9 @@ public class PlayerController : MonoBehaviour
         Debug.Log("Game Over");
 
         anim.SetTrigger("die");
+
+        if (gameOverUI != null)
+            gameOverUI.SetActive(true);
         Destroy(gameObject, 1f);
     }
 
