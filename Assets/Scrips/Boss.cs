@@ -5,15 +5,15 @@ public class Boss : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform player;
 
-    [Header("Arm (ตัวที่ติดตัว)")]
-    [SerializeField] private GameObject armObject;   // Arm_Right (ใน Hierarchy)
-    [SerializeField] private Animator armAnim;       // Animator ของแขน
+    [Header("Arm")]
+    [SerializeField] private GameObject armObject;
+    [SerializeField] private Animator armAnim;
 
-    [Header("Shoot Point (ตัวเล็งจริง)")]
-    [SerializeField] private Transform shootPos;     // จุดปลายแขน (หมุนตัวนี้)
+    [Header("Shoot Point")]
+    [SerializeField] private Transform shootPos;
 
     [Header("Projectile Arm")]
-    [SerializeField] private GameObject armPrefab;   // Prefab แขน (ไอคอนสีน้ำเงิน)
+    [SerializeField] private GameObject armPrefab;
 
     [Header("Attack")]
     [SerializeField] private float attackCooldown = 2f;
@@ -22,39 +22,62 @@ public class Boss : MonoBehaviour
     [SerializeField] private float rotateSpeed = 10f;
     [SerializeField] private float minAngle = -80f;
     [SerializeField] private float maxAngle = 80f;
-    [SerializeField] private float angleOffset = 0f; // ถ้าสไปรท์ไม่หันขวา ใส่ 90 หรือ -90
+    [SerializeField] private float angleOffset = 0f;
 
     [Header("Phase")]
     [SerializeField] private int maxHP = 50;
-    private int currentHP;
 
+    private int currentHP;
     private float attackTimer;
     private int phase = 1;
     private bool isArmOut = false;
 
+    // ================= START =================
     void Start()
     {
         currentHP = maxHP;
+
+        FindPlayer(); // 👈 หา player ตอนเริ่ม
     }
 
+    // ================= UPDATE =================
     void Update()
     {
-        if (player == null) return;
+        // 👇 เผื่อ player spawn ทีหลัง
+        if (player == null)
+        {
+            FindPlayer();
+            return;
+        }
 
         HandleAttack();
         UpdatePhase();
     }
 
-    // ใช้ LateUpdate กัน animation มาทับ
     void LateUpdate()
     {
         AimShootPos();
     }
 
+    // ================= FIND PLAYER =================
+    void FindPlayer()
+    {
+        GameObject obj = GameObject.FindGameObjectWithTag("Player");
+
+        if (obj != null)
+        {
+            player = obj.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Boss: หา Player ไม่เจอ (เช็ค Tag)");
+        }
+    }
+
     // ================= AIM =================
     void AimShootPos()
     {
-        if (isArmOut) return; // ตอนยิงอยู่ไม่ต้องหมุน
+        if (isArmOut || shootPos == null || player == null) return;
 
         Vector2 dir = player.position - shootPos.position;
 
@@ -65,8 +88,8 @@ public class Boss : MonoBehaviour
 
         Quaternion targetRot = Quaternion.Euler(0, 0, angle);
 
-        shootPos.rotation = Quaternion.Lerp(
-            shootPos.rotation,
+        shootPos.localRotation = Quaternion.Lerp(
+            shootPos.localRotation,
             targetRot,
             Time.deltaTime * rotateSpeed
         );
@@ -83,20 +106,20 @@ public class Boss : MonoBehaviour
         {
             attackTimer = 0f;
 
-            // เรียก animation แขน
             if (armAnim != null)
                 armAnim.SetTrigger("attack");
         }
     }
 
-    // 👉 เรียกจาก Animation Event (บน Arm)
+    // ================= SHOOT =================
     public void ShootArm()
     {
-        if (isArmOut) return;
+        if (isArmOut || shootPos == null || armPrefab == null) return;
 
         isArmOut = true;
 
-        armObject.SetActive(false);
+        if (armObject != null)
+            armObject.SetActive(false);
 
         GameObject armObj = Instantiate(armPrefab, shootPos.position, Quaternion.identity);
 
@@ -104,15 +127,17 @@ public class Boss : MonoBehaviour
 
         if (proj != null)
         {
-            proj.Init(this, player); // 👈 ส่ง player ไป
+            proj.Init(this, player);
         }
     }
 
-    // 👉 ให้แขนกลับ
+    // ================= RETURN ARM =================
     public void ReturnArm()
     {
         isArmOut = false;
-        armObject.SetActive(true);
+
+        if (armObject != null)
+            armObject.SetActive(true);
     }
 
     // ================= PHASE =================

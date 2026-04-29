@@ -16,7 +16,7 @@ public class PlayerController : MonoBehaviour
     [Header("Ground Check")]
     [SerializeField] private Transform feetPos;
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private float groundDistance = 0.4f;
+    [SerializeField] private float groundDistance = 0.3f;
 
     [Header("Jump")]
     [SerializeField] private float jumpForce = 12f;
@@ -39,7 +39,6 @@ public class PlayerController : MonoBehaviour
 
     // ================= STATE =================
     private bool isGrounded;
-    private bool isCrouching;
     private int jumpCount;
 
     void Start()
@@ -64,27 +63,45 @@ public class PlayerController : MonoBehaviour
         UpdateAnimation();
     }
 
+    // ================= GROUND =================
     void CheckGround()
     {
-        isGrounded = Physics2D.OverlapCircle(feetPos.position, groundDistance, groundLayer);
-        if (isGrounded) jumpCount = 0;
-    }
+        bool wasGrounded = isGrounded;
 
-    void HandleJump()
-    {
-        if (Keyboard.current.spaceKey.wasPressedThisFrame && jumpCount < maxJumpCount)
+        isGrounded = Physics2D.OverlapCircle(feetPos.position, groundDistance, groundLayer);
+
+        // 👇 รีเซ็ต jump เฉพาะตอน "เพิ่งแตะพื้น"
+        if (!wasGrounded && isGrounded)
         {
-            jumpCount++;
-            rb.velocity = new Vector2(rb.velocity.x, 0f);
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            jumpCount = 0;
         }
     }
 
+    // ================= JUMP =================
+    void HandleJump()
+    {
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            if (jumpCount < maxJumpCount)
+            {
+                jumpCount++;
+
+                // รีเซ็ตแรงตกก่อน
+                rb.velocity = new Vector2(rb.velocity.x, 0f);
+
+                // กระโดด
+                rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+
+                Debug.Log("Jump: " + jumpCount);
+            }
+        }
+    }
+
+    // ================= CROUCH =================
     void HandleCrouch()
     {
         if (isGrounded && Keyboard.current.leftCtrlKey.wasPressedThisFrame)
         {
-            isCrouching = true;
             anim.SetBool("isCrouching", true);
             col.size = crouchSize;
             col.offset = crouchOffset;
@@ -92,22 +109,22 @@ public class PlayerController : MonoBehaviour
 
         if (Keyboard.current.leftCtrlKey.wasReleasedThisFrame)
         {
-            isCrouching = false;
             anim.SetBool("isCrouching", false);
             col.size = standSize;
             col.offset = standOffset;
         }
     }
 
-    // ================= 💥 DAMAGE =================
+    // ================= DAMAGE =================
     public void TakeDamage(int dmg)
     {
         if (isDead || isInvincible) return;
 
-        isInvincible = true; // 👈 ต้องตั้งตรงนี้ทันที
+        isInvincible = true;
 
         currentHP -= dmg;
         Debug.Log("โดน! HP: " + currentHP);
+
         heartUI.UpdateHearts(currentHP);
 
         anim.SetTrigger("hit");
@@ -120,31 +137,15 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(Invincible());
         }
-
-        
     }
+
     IEnumerator Invincible()
     {
-        yield return new WaitForSeconds(1f);
-        isInvincible = false;
-    }
-    /*IEnumerator Invincible()
-    {
-        isInvincible = true;
-
-        // กระพริบ
-        for (int i = 0; i < 5; i++)
-        {
-            sr.enabled = false;
-            yield return new WaitForSeconds(0.1f);
-            sr.enabled = true;
-            yield return new WaitForSeconds(0.1f);
-        }
-
         yield return new WaitForSeconds(invincibleTime);
         isInvincible = false;
-    }*/
+    }
 
+    // ================= DIE =================
     void Die()
     {
         if (isDead) return;
@@ -157,15 +158,18 @@ public class PlayerController : MonoBehaviour
 
         if (gameOverUI != null)
             gameOverUI.SetActive(true);
+
         Destroy(gameObject, 1f);
     }
 
+    // ================= ANIMATION =================
     void UpdateAnimation()
     {
         anim.SetBool("isGrounded", isGrounded);
         anim.SetFloat("yVelocity", rb.velocity.y);
     }
 
+    // ================= DEBUG =================
     private void OnDrawGizmosSelected()
     {
         if (feetPos != null)

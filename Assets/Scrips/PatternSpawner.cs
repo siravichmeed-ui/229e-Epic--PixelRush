@@ -11,12 +11,11 @@ public class PatternSpawner : MonoBehaviour
     [Header("Spawn")]
     public float spawnX = 10f;
 
-    [Header("Difficulty")]
-    public float gameTime;
-
     [Header("Boss")]
     public GameObject bossPrefab;
-    public float bossTime = 60f;
+    public float bossDistance = 300f;
+
+    [SerializeField] private Vector2 bossSpawnPosition = new Vector2(10f, 0f); // 👈 ตั้งใน Inspector ได้
 
     private bool bossSpawned = false;
 
@@ -25,42 +24,40 @@ public class PatternSpawner : MonoBehaviour
         StartCoroutine(SpawnLoop());
     }
 
-    void Update()
-    {
-        gameTime += Time.deltaTime;
-    }
-
     IEnumerator SpawnLoop()
     {
         while (true)
         {
-            // 👉 เช็ค boss
-            if (!bossSpawned && gameTime >= bossTime)
+            float distance = GameManager.Instance.distance;
+
+            if (!bossSpawned && distance >= bossDistance)
             {
                 SpawnBoss();
                 yield break;
             }
 
-            PatternData pattern = GetPattern();
+            PatternData pattern = GetPattern(distance);
 
-            yield return StartCoroutine(SpawnPattern(pattern));
+            yield return StartCoroutine(SpawnPattern(pattern, distance));
 
             yield return new WaitForSeconds(1f);
         }
     }
 
-    PatternData GetPattern()
+    // ================= PATTERN =================
+    PatternData GetPattern(float distance)
     {
-        if (gameTime < 20f)
+        if (distance < 100f)
             return easy[Random.Range(0, easy.Length)];
 
-        if (gameTime < 40f)
+        if (distance < 200f)
             return medium[Random.Range(0, medium.Length)];
 
         return hard[Random.Range(0, hard.Length)];
     }
 
-    IEnumerator SpawnPattern(PatternData pattern)
+    // ================= SPAWN =================
+    IEnumerator SpawnPattern(PatternData pattern, float distance)
     {
         foreach (float y in pattern.spawnHeights)
         {
@@ -74,7 +71,7 @@ public class PatternSpawner : MonoBehaviour
 
             if (rb != null)
             {
-                float speed = 3f + gameTime * 0.1f;
+                float speed = 3f + distance * 0.05f;
                 rb.velocity = Vector2.left * speed;
             }
 
@@ -82,8 +79,11 @@ public class PatternSpawner : MonoBehaviour
         }
     }
 
+    // ================= BOSS =================
     void SpawnBoss()
     {
-        Instantiate(bossPrefab, new Vector2(spawnX, 0), Quaternion.identity);
+        bossSpawned = true;
+
+        Instantiate(bossPrefab, bossSpawnPosition, Quaternion.identity);
     }
 }
