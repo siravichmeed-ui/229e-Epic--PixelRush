@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class Boss : MonoBehaviour
 {
+    public static Boss Instance;
+
     [Header("References")]
     [SerializeField] private Transform player;
 
@@ -24,26 +26,35 @@ public class Boss : MonoBehaviour
     [SerializeField] private float maxAngle = 80f;
     [SerializeField] private float angleOffset = 0f;
 
-    [Header("Phase")]
-    [SerializeField] private int maxHP = 50;
+    [Header("HP")]
+    [SerializeField] private int maxHP = 10;
+
+    [SerializeField] private Animator anim;
+    [SerializeField] private float destroyDelay = 1.5f;
 
     private int currentHP;
     private float attackTimer;
     private int phase = 1;
     private bool isArmOut = false;
+    private bool isDead = false;
 
-    // ================= START =================
+    // ================= INIT =================
+    void Awake()
+    {
+        Instance = this;
+    }
+
     void Start()
     {
         currentHP = maxHP;
-
-        FindPlayer(); // 👈 หา player ตอนเริ่ม
+        FindPlayer();
     }
 
     // ================= UPDATE =================
     void Update()
     {
-        // 👇 เผื่อ player spawn ทีหลัง
+        if (isDead) return;
+
         if (player == null)
         {
             FindPlayer();
@@ -63,15 +74,7 @@ public class Boss : MonoBehaviour
     void FindPlayer()
     {
         GameObject obj = GameObject.FindGameObjectWithTag("Player");
-
-        if (obj != null)
-        {
-            player = obj.transform;
-        }
-        else
-        {
-            Debug.LogWarning("Boss: หา Player ไม่เจอ (เช็ค Tag)");
-        }
+        if (obj != null) player = obj.transform;
     }
 
     // ================= AIM =================
@@ -111,7 +114,7 @@ public class Boss : MonoBehaviour
         }
     }
 
-    // ================= SHOOT =================
+    // 👉 Animation Event เรียกตัวนี้
     public void ShootArm()
     {
         if (isArmOut || shootPos == null || armPrefab == null) return;
@@ -131,7 +134,7 @@ public class Boss : MonoBehaviour
         }
     }
 
-    // ================= RETURN ARM =================
+    // 👉 เรียกจาก projectile ตอนกลับ
     public void ReturnArm()
     {
         isArmOut = false;
@@ -161,7 +164,11 @@ public class Boss : MonoBehaviour
     // ================= DAMAGE =================
     public void TakeDamage(int dmg)
     {
+        if (isDead) return;
+
         currentHP -= dmg;
+
+        Debug.Log("Boss HP: " + currentHP);
 
         if (currentHP <= 0)
         {
@@ -169,9 +176,30 @@ public class Boss : MonoBehaviour
         }
     }
 
+    public bool IsDead()
+    {
+        return isDead;
+    }
+
     void Die()
     {
+        isDead = true;
+
         Debug.Log("Boss Dead");
-        Destroy(gameObject);
+
+        // 👉 เล่น animation ตาย
+        if (anim != null)
+        {
+            anim.SetTrigger("die");
+        }
+
+        // 👉 แจ้ง GameManager
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.BossDefeated();
+        }
+
+        // 👉 ทำลายหลัง animation
+        Destroy(gameObject, destroyDelay);
     }
 }

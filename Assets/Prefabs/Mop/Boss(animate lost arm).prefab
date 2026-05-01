@@ -298,4 +298,4 @@ MonoBehaviour:
   minAngle: -80
   maxAngle: 80
   angleOffset: 0
-  maxHP: 50
+  maxHP: 10

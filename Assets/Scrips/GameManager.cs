@@ -14,13 +14,15 @@ public class GameManager : MonoBehaviour
     [Header("State")]
     public bool isGameRunning = true;
 
+    [Header("Boss")]
+    public bool isBossPhase = false;
+
     void Awake()
     {
-        // singleton
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // ข้าม scene ได้
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -32,10 +34,10 @@ public class GameManager : MonoBehaviour
     {
         if (!isGameRunning) return;
 
-        // เพิ่มระยะ
+        // 👉 เพิ่มระยะ
         distance += speed * Time.deltaTime;
 
-        // เพิ่มความเร็วเรื่อย ๆ
+        // 👉 เพิ่มความเร็วเรื่อย ๆ
         speed += speedIncreaseRate * Time.deltaTime;
     }
 
@@ -54,5 +56,24 @@ public class GameManager : MonoBehaviour
     {
         distance = 0f;
         speed = 5f;
+        isBossPhase = false;
+        isGameRunning = true;
+    }
+
+    // ================= BOSS =================
+    public void EnterBossPhase()
+    {
+        isBossPhase = true;
+
+        // 👉 หยุดเพิ่มความเร็ว (optional)
+        speedIncreaseRate = 0f;
+    }
+
+    public void BossDefeated()
+    {
+        Debug.Log("Boss Cleared!");
+
+        // 👉 จะหยุดเกม หรือให้ไปต่อก็ได้
+        StopGame();
     }
 }

@@ -14,8 +14,12 @@ public class PatternSpawner : MonoBehaviour
     [Header("Boss")]
     public GameObject bossPrefab;
     public float bossDistance = 300f;
+    public Vector2 bossSpawnPosition = new Vector2(10f, 0f);
 
-    [SerializeField] private Vector2 bossSpawnPosition = new Vector2(10f, 0f); // 👈 ตั้งใน Inspector ได้
+    [Header("Item")]
+    public GameObject itemPrefab;
+    public float itemDelay = 2f;
+    public float[] itemHeights;
 
     private bool bossSpawned = false;
 
@@ -44,7 +48,6 @@ public class PatternSpawner : MonoBehaviour
         }
     }
 
-    // ================= PATTERN =================
     PatternData GetPattern(float distance)
     {
         if (distance < 100f)
@@ -56,7 +59,6 @@ public class PatternSpawner : MonoBehaviour
         return hard[Random.Range(0, hard.Length)];
     }
 
-    // ================= SPAWN =================
     IEnumerator SpawnPattern(PatternData pattern, float distance)
     {
         foreach (float y in pattern.spawnHeights)
@@ -79,11 +81,43 @@ public class PatternSpawner : MonoBehaviour
         }
     }
 
-    // ================= BOSS =================
     void SpawnBoss()
     {
         bossSpawned = true;
 
         Instantiate(bossPrefab, bossSpawnPosition, Quaternion.identity);
+
+        GameManager.Instance.EnterBossPhase();
+
+        StartCoroutine(ItemLoop());
+    }
+
+    IEnumerator ItemLoop()
+    {
+        while (true)
+        {
+            if (Boss.Instance == null || Boss.Instance.IsDead())
+                yield break;
+
+            SpawnItem();
+
+            yield return new WaitForSeconds(itemDelay);
+        }
+    }
+
+    void SpawnItem()
+    {
+        float y = itemHeights[Random.Range(0, itemHeights.Length)];
+
+        Vector2 pos = new Vector2(spawnX, y);
+
+        GameObject obj = Instantiate(itemPrefab, pos, Quaternion.identity);
+
+        Rigidbody2D rb = obj.GetComponent<Rigidbody2D>();
+
+        if (rb != null)
+        {
+            rb.velocity = Vector2.left * 5f;
+        }
     }
 }

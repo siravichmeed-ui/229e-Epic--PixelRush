@@ -156,9 +156,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b3ad42c1b54f104195545cb30049536, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
+  groundCheck: {fileID: 0}
+  groundDistance: 3.34
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
   target: {fileID: 0}
   targetTag: Player
-  speed: 6
+  speed: 3.26
   followContinuously: 0
   lifeTime: 8
 --- !u!58 &358783802467461423

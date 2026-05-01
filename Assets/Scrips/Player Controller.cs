@@ -178,4 +178,8 @@ public class PlayerController : MonoBehaviour
             Gizmos.DrawWireSphere(feetPos.position, groundDistance);
         }
     }
+    public void PlayAttack()
+    {
+        anim.SetTrigger("attack");
+    }
 }
