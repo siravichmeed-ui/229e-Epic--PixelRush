@@ -9,6 +9,8 @@ TagManager:
   - Enemy
   - Trigger Wall
   - Destroy Obstacle
+  - PauseUI
+  - SettingsUI
   layers:
   - Default
   - TransparentFX

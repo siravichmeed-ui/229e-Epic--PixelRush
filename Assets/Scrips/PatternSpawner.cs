@@ -8,9 +8,6 @@ public class PatternSpawner : MonoBehaviour
     public PatternData[] medium;
     public PatternData[] hard;
 
-    [Header("Spawn")]
-    public float spawnX = 10f;
-
     [Header("Boss")]
     public GameObject bossPrefab;
     public float bossDistance = 300f;
@@ -19,7 +16,7 @@ public class PatternSpawner : MonoBehaviour
     [Header("Item")]
     public GameObject itemPrefab;
     public float itemDelay = 2f;
-    public float[] itemHeights;
+    public Transform[] itemSpawnPoints;
 
     private bool bossSpawned = false;
 
@@ -59,15 +56,22 @@ public class PatternSpawner : MonoBehaviour
         return hard[Random.Range(0, hard.Length)];
     }
 
+    // ================= SPAWN =================
     IEnumerator SpawnPattern(PatternData pattern, float distance)
     {
-        foreach (float y in pattern.spawnHeights)
+        foreach (var rule in pattern.spawnRules)
         {
-            GameObject prefab = pattern.obstacles[Random.Range(0, pattern.obstacles.Length)];
+            // 🎯 Chance
+            if (Random.value > rule.spawnChance)
+                continue;
 
-            Vector2 pos = new Vector2(spawnX, y);
+            Transform spawnPoint = GetSpawnPoint(rule, pattern.spawnPoints);
 
-            GameObject obj = Instantiate(prefab, pos, Quaternion.identity);
+            if (spawnPoint == null) continue;
+
+            Vector2 pos = spawnPoint.position;
+
+            GameObject obj = Instantiate(rule.prefab, pos, Quaternion.identity);
 
             Rigidbody2D rb = obj.GetComponent<Rigidbody2D>();
 
@@ -81,6 +85,33 @@ public class PatternSpawner : MonoBehaviour
         }
     }
 
+    // ================= SELECT SPAWN =================
+    Transform GetSpawnPoint(SpawnRule rule, Transform[] defaultPoints)
+    {
+        if (defaultPoints == null || defaultPoints.Length == 0)
+            return null;
+
+        switch (rule.mode)
+        {
+            case SpawnMode.RandomAll:
+                return defaultPoints[Random.Range(0, defaultPoints.Length)];
+
+            case SpawnMode.Fixed:
+                int index = Mathf.Clamp(rule.fixedIndex, 0, defaultPoints.Length - 1);
+                return defaultPoints[index];
+
+            case SpawnMode.CustomSet:
+                if (rule.customPoints != null && rule.customPoints.Length > 0)
+                {
+                    return rule.customPoints[Random.Range(0, rule.customPoints.Length)];
+                }
+                break;
+        }
+
+        return defaultPoints[0];
+    }
+
+    // ================= BOSS =================
     void SpawnBoss()
     {
         bossSpawned = true;
@@ -92,6 +123,7 @@ public class PatternSpawner : MonoBehaviour
         StartCoroutine(ItemLoop());
     }
 
+    // ================= ITEM =================
     IEnumerator ItemLoop()
     {
         while (true)
@@ -107,9 +139,11 @@ public class PatternSpawner : MonoBehaviour
 
     void SpawnItem()
     {
-        float y = itemHeights[Random.Range(0, itemHeights.Length)];
+        if (itemSpawnPoints == null || itemSpawnPoints.Length == 0) return;
 
-        Vector2 pos = new Vector2(spawnX, y);
+        Transform point = itemSpawnPoints[Random.Range(0, itemSpawnPoints.Length)];
+
+        Vector2 pos = point.position;
 
         GameObject obj = Instantiate(itemPrefab, pos, Quaternion.identity);
 

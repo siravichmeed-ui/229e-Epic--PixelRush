@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,12 +14,12 @@ public class GameManager : MonoBehaviour
 
     [Header("State")]
     public bool isGameRunning = true;
-
-    [Header("Boss")]
     public bool isBossPhase = false;
 
     void Awake()
     {
+        Time.timeScale = 1f;
+
         if (Instance == null)
         {
             Instance = this;
@@ -30,14 +31,27 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // 🔥 เพิ่มอันนี้ (สำคัญมาก)
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        ResetGame(); // 👈 รีเซ็ตทุกครั้งหลังโหลด
+    }
+
     void Update()
     {
         if (!isGameRunning) return;
 
-        // 👉 เพิ่มระยะ
         distance += speed * Time.deltaTime;
-
-        // 👉 เพิ่มความเร็วเรื่อย ๆ
         speed += speedIncreaseRate * Time.deltaTime;
     }
 
@@ -45,35 +59,44 @@ public class GameManager : MonoBehaviour
     public void StopGame()
     {
         isGameRunning = false;
+        Time.timeScale = 0f;
     }
 
     public void ResumeGame()
     {
         isGameRunning = true;
+        Time.timeScale = 1f;
     }
 
     public void ResetGame()
     {
         distance = 0f;
         speed = 5f;
+        speedIncreaseRate = 0.02f;
+
         isBossPhase = false;
         isGameRunning = true;
+
+        Time.timeScale = 1f;
     }
 
     // ================= BOSS =================
     public void EnterBossPhase()
     {
         isBossPhase = true;
-
-        // 👉 หยุดเพิ่มความเร็ว (optional)
         speedIncreaseRate = 0f;
     }
 
     public void BossDefeated()
     {
         Debug.Log("Boss Cleared!");
-
-        // 👉 จะหยุดเกม หรือให้ไปต่อก็ได้
         StopGame();
+    }
+
+    // ================= RESTART =================
+    public void RestartGame()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

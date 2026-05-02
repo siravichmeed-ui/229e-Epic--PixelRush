@@ -14,17 +14,25 @@ public class UIManager : MonoBehaviour
     {
         popupUI.SetActive(false);
     }
+
     public void Quit()
     {
         Application.Quit();
     }
+
     public void Game()
     {
         SceneManager.LoadScene(1);
-
     }
+
     public void Home()
     {
         SceneManager.LoadScene(0);
+    }
+
+    // 🔥 เพิ่มอันนี้
+    public void Restart()
+    {
+        GameManager.Instance.RestartGame();
     }
 }

@@ -159,7 +159,8 @@ public class PlayerController : MonoBehaviour
         if (gameOverUI != null)
             gameOverUI.SetActive(true);
 
-        Destroy(gameObject, 1f);
+        // 👉 หยุดเกม
+        GameManager.Instance.StopGame();
     }
 
     // ================= ANIMATION =================
